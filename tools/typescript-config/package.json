@@ -1,0 +1,11 @@
+{
+  "name": "@pshinobi-cash/typescript-config",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Shared TypeScript configuration for Shinobi Cash packages",
+  "main": "index.js",
+  "files": [
+    "base.json",
+    "library.json"
+  ]
+}

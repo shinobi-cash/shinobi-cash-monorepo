@@ -1,4 +1,18 @@
 {
-  "extends": "@workspace/typescript-config/base.json"
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "./tools/typescript-config/base.json",
+  "compilerOptions": {
+    "jsx": "preserve",
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "baseUrl": ".",
+    "paths": {
+      "@shinobi-cash/*": ["./packages/*/src"]
+    }
+  },
+  "files": [],
+  "references": []
 }
-
