@@ -1,5 +1,5 @@
 {
-  "name": "@pshinobi-cash/typescript-config",
+  "name": "@shinobi-cash/typescript-config",
   "version": "0.0.0",
   "private": true,
   "description": "Shared TypeScript configuration for Shinobi Cash packages",
