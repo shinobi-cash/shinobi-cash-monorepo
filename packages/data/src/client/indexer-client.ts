@@ -92,13 +92,13 @@ export class IndexerClient {
    * ```typescript
    * // Create for Arbitrum Sepolia pool
    * const client = IndexerClient.createForPool(
-   *   '0xAA5eD1472A9E8224C44D318037152F9e49045add',
+   *   '0x5543b250b8a44513BA91C0346BeE40890FfD7D18',
    *   'https://indexer.shinobi.cash/graphql'
    * );
    *
    * // Create with auth headers
    * const client = IndexerClient.createForPool(
-   *   '0xAA5eD1472A9E8224C44D318037152F9e49045add',
+   *   '0x5543b250b8a44513BA91C0346BeE40890FfD7D18',
    *   'https://indexer.shinobi.cash/graphql',
    *   {
    *     headers: { 'Authorization': 'Bearer token' },
@@ -179,7 +179,7 @@ export class IndexerClient {
    * ```typescript
    * const response = await client.executeQuery<{ pool: Pool }>(
    *   'query GetPool($id: String!) { pool(id: $id) { id totalDeposits } }',
-   *   { id: '0xAA5eD1472A9E8224C44D318037152F9e49045add' }
+   *   { id: '0x5543b250b8a44513BA91C0346BeE40890FfD7D18' }
    * );
    * console.log(response.pool);
    * ```
@@ -330,7 +330,7 @@ export class IndexerClient {
    *
    * @example
    * ```typescript
-   * const leaves = await client.getAllStateTreeLeaves('0xAA5eD1472A9E8224C44D318037152F9e49045add');
+   * const leaves = await client.getAllStateTreeLeaves('0x5543b250b8a44513BA91C0346BeE40890FfD7D18');
    * console.log(`Retrieved ${leaves.length} leaves for merkle tree`);
    * ```
    */
@@ -370,7 +370,7 @@ export class IndexerClient {
    *
    * @example
    * ```typescript
-   * const pool = await client.getPoolStats('0xAA5eD1472A9E8224C44D318037152F9e49045add');
+   * const pool = await client.getPoolStats('0x5543b250b8a44513BA91C0346BeE40890FfD7D18');
    * if (pool) {
    *   console.log(`Total deposits: ${pool.totalDeposits}`);
    *   console.log(`Total withdrawals: ${pool.totalWithdrawals}`);
@@ -392,7 +392,7 @@ export class IndexerClient {
    *
    * @example
    * ```typescript
-   * const pool = await client.getPoolStatsSerialized('0xAA5eD1472A9E8224C44D318037152F9e49045add');
+   * const pool = await client.getPoolStatsSerialized('0x5543b250b8a44513BA91C0346BeE40890FfD7D18');
    * if (pool) {
    *   // Safe to use in JSON.stringify
    *   console.log(JSON.stringify(pool, null, 2));
