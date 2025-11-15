@@ -65,22 +65,22 @@ export const CONTRACTS = {
 
 } as const;
 
-const SUPPORTED_CROSSCHAINS_NETWORK = [{
+export const SUPPORTED_CROSSCHAINS_NETWORK = [{
     chainId: 84532,
     name: "Base Sepolia",
     rpcUrl: 'https://sepolia.base.org',
     explorerUrl: "https://sepolia.basescan.org",
   }
-]
+] as const;
 
-const POOL_CHAIN_NETWORK = {
+export const POOL_CHAIN_NETWORK = {
   chainId: 421614,
   name: "Arbitrum Sepolia",
   rpcUrl: '',
   explorerUrl: "https://sepolia.arbiscan.io",
-}
+} as const;
 
-const crosschainConfig = {
+export const crosschainConfig = {
   84532: {
     shinobiCashCrosschainDepositEntrypoint:{
       address:'0x3f0351cdd05616B1807C177592ccB81b3220b5Ff',
@@ -103,10 +103,10 @@ const crosschainConfig = {
       abi:[]
     },
   },
-  
-} as const
 
-const poolChainConfig = {
+} as const;
+
+export const poolChainConfig = {
   421614:{
     shinobiCashEntrypoint:{
       address:'0x11C3E1332893A3E34273e6c81f245fA7fB84A52d',
@@ -134,7 +134,7 @@ const poolChainConfig = {
       abi:SimpleShinobiCashPoolPaymasterAbi
     },
     crosschainWithdrawalPaymaster:{
-      address:'0x9b50Dc7e1972AAc8c3628CCF3074D3e011491445',
+      address:'0x41a69bd2b52c32b1ad2bd729885f5287a07287f7',
       blockNumber:0,
       abi:CrosschainWithdrawalPaymasterAbi
     },
