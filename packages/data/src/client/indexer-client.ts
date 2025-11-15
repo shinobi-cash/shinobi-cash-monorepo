@@ -219,6 +219,62 @@ export class IndexerClient {
   }
 
   /**
+   * Execute a paginated GraphQL query and extract items
+   *
+   * Handles Ponder's pagination response format where queries return:
+   * { queryName: { items: [...], pageInfo: {...} } }
+   *
+   * @template T - The type of items in the response
+   * @param query - GraphQL query string
+   * @param variables - Query variables object
+   * @returns Promise resolving to paginated response with items and pageInfo
+   *
+   * @example
+   * ```typescript
+   * const response = await client.executePaginatedQuery<Activity>(query, { poolId, limit: 100 });
+   * console.log(response.items); // Array of activities
+   * console.log(response.pageInfo.hasNextPage); // true/false
+   * ```
+   */
+  async executePaginatedQuery<T>(
+    query: string,
+    variables: Record<string, any> = {}
+  ): Promise<import('../types/indexer.js').PaginatedResponse<T>> {
+    const result = await this.executeQuery<any>(query, variables);
+
+    // Extract the first key from result (e.g., "activitys", "stateTreeLeaves")
+    const queryKey = Object.keys(result)[0];
+    if (!queryKey) {
+      return {
+        items: [],
+        pageInfo: {
+          hasNextPage: false,
+          hasPreviousPage: false,
+        },
+      };
+    }
+
+    const data = result[queryKey];
+
+    // Check if response has Ponder pagination structure
+    if (data && typeof data === 'object' && 'items' in data && 'pageInfo' in data) {
+      return {
+        items: data.items as T[],
+        pageInfo: data.pageInfo,
+      };
+    }
+
+    // Fallback for non-paginated responses (treat as single page)
+    return {
+      items: (Array.isArray(data) ? data : [data]) as T[],
+      pageInfo: {
+        hasNextPage: false,
+        hasPreviousPage: false,
+      },
+    };
+  }
+
+  /**
    * Execute multiple queries in parallel with deduplication
    *
    * @param queries - Array of query objects with query string and variables
@@ -401,6 +457,150 @@ export class IndexerClient {
    */
   async getPoolStatsSerialized(poolId: string): Promise<import('../types/indexer.js').SerializedPool | null> {
     return this.query().pool().byId(poolId).firstSerialized();
+  }
+
+  /**
+   * Get activities for a pool with pagination support
+   *
+   * This method properly handles Ponder's paginated response format and converts
+   * GraphQL string values to BigInt types.
+   *
+   * @param options - Query options
+   * @param options.poolId - The pool ID to get activities for
+   * @param options.limit - Number of activities to fetch (default: 100)
+   * @param options.orderDirection - Sort direction: 'asc' or 'desc' (default: 'desc')
+   * @param options.after - Cursor for pagination (from previous pageInfo.endCursor)
+   * @returns Promise resolving to paginated response with activities and page info
+   *
+   * @example
+   * ```typescript
+   * // Get first page of activities
+   * const firstPage = await client.getActivities({
+   *   poolId: '0x5543b250b8a44513BA91C0346BeE40890FfD7D18',
+   *   limit: 100
+   * });
+   * console.log(firstPage.items); // Array of activities
+   * console.log(firstPage.pageInfo.hasNextPage); // true/false
+   *
+   * // Get next page using cursor
+   * if (firstPage.pageInfo.hasNextPage) {
+   *   const nextPage = await client.getActivities({
+   *     poolId: '0x5543b250b8a44513BA91C0346BeE40890FfD7D18',
+   *     limit: 100,
+   *     after: firstPage.pageInfo.endCursor
+   *   });
+   * }
+   * ```
+   */
+  async getActivities(options: {
+    poolId: string;
+    limit?: number;
+    orderDirection?: 'asc' | 'desc';
+    after?: string;
+  }): Promise<import('../types/indexer.js').PaginatedResponse<import('../types/indexer.js').Activity>> {
+    const { poolId, limit = 100, orderDirection = 'desc', after } = options;
+
+    const query = `
+      query GetActivities($poolId: String!, $limit: Int!, $orderDirection: String!, $after: String) {
+        activitys(
+          where: { poolId: $poolId }
+          orderBy: "timestamp"
+          orderDirection: $orderDirection
+          limit: $limit
+          after: $after
+        ) {
+          items {
+            id
+            type
+            aspStatus
+            poolId
+            user
+            recipient
+            amount
+            originalAmount
+            vettingFeeAmount
+            commitment
+            label
+            precommitmentHash
+            spentNullifier
+            newCommitment
+            refundCommitment
+            feeAmount
+            feeRefund
+            relayer
+            isSponsored
+            isRefunded
+            orderId
+            blockNumber
+            timestamp
+            originTransactionHash
+            destinationTransactionHash
+            originChainId
+            destinationChainId
+          }
+          pageInfo {
+            hasNextPage
+            hasPreviousPage
+            endCursor
+            startCursor
+          }
+        }
+      }
+    `;
+
+    const variables = { poolId, limit, orderDirection, after };
+
+    // Raw response from GraphQL (all numeric fields are strings)
+    interface RawActivity {
+      id: string;
+      type: string;
+      aspStatus: string;
+      poolId: string;
+      user: string;
+      recipient?: string;
+      amount: string | null;
+      originalAmount?: string;
+      vettingFeeAmount?: string;
+      commitment: string;
+      label?: string | null;
+      precommitmentHash?: string;
+      spentNullifier?: string;
+      newCommitment?: string;
+      refundCommitment?: string;
+      feeAmount?: string;
+      feeRefund?: string;
+      relayer?: string;
+      isSponsored?: boolean;
+      isRefunded?: boolean;
+      orderId?: string;
+      blockNumber: string;
+      timestamp: string;
+      originTransactionHash: string;
+      destinationTransactionHash?: string;
+      originChainId: string | null;
+      destinationChainId: string | null;
+    }
+
+    const result = await this.executePaginatedQuery<RawActivity>(query, variables);
+
+    // Convert string fields to bigint for Activity type
+    const items = result.items.map((item) => ({
+      ...item,
+      amount: item.amount ? BigInt(item.amount) : null,
+      originalAmount: item.originalAmount ? BigInt(item.originalAmount) : undefined,
+      vettingFeeAmount: item.vettingFeeAmount ? BigInt(item.vettingFeeAmount) : undefined,
+      feeAmount: item.feeAmount ? BigInt(item.feeAmount) : undefined,
+      feeRefund: item.feeRefund ? BigInt(item.feeRefund) : undefined,
+      blockNumber: BigInt(item.blockNumber),
+      timestamp: BigInt(item.timestamp),
+      originChainId: item.originChainId ? BigInt(item.originChainId) : null,
+      destinationChainId: item.destinationChainId ? BigInt(item.destinationChainId) : null,
+    })) as import('../types/indexer.js').Activity[];
+
+    return {
+      items,
+      pageInfo: result.pageInfo,
+    };
   }
 }
 
