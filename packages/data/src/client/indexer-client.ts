@@ -397,8 +397,8 @@ export class IndexerClient {
   /**
    * Get the latest ASP approval root
    *
-   * This is a convenience method that wraps the ASPQueryBuilder
-   * and returns the most recent ASP approval list entry.
+   * This method properly handles Ponder's paginated response format and converts
+   * GraphQL string values to BigInt types.
    *
    * @returns Promise resolving to the latest ASP approval list or null if none exist
    *
@@ -412,7 +412,52 @@ export class IndexerClient {
    * ```
    */
   async getLatestASPRoot(): Promise<import('../types/indexer.js').ASPApprovalList | null> {
-    return this.query().aspApprovals().latest();
+    const query = `
+      query GetLatestASPRoot {
+        associationSetUpdates(
+          orderBy: "timestamp"
+          orderDirection: "desc"
+          limit: 1
+        ) {
+          items {
+            id
+            root
+            ipfsCID
+            timestamp
+          }
+          pageInfo {
+            hasNextPage
+            hasPreviousPage
+            endCursor
+            startCursor
+          }
+        }
+      }
+    `;
+
+    // Raw response from GraphQL (numeric fields are strings)
+    interface RawASPApprovalList {
+      id: string;
+      root: string;
+      ipfsCID: string;
+      timestamp: string;
+    }
+
+    const result = await this.executePaginatedQuery<RawASPApprovalList>(query, {});
+
+    if (result.items.length === 0) {
+      return null;
+    }
+
+    const item = result.items[0];
+
+    // Convert string timestamp to bigint
+    return {
+      id: item.id,
+      root: item.root,
+      ipfsCID: item.ipfsCID,
+      timestamp: BigInt(item.timestamp),
+    };
   }
 
   /**
