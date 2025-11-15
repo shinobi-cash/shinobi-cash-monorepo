@@ -58,97 +58,177 @@ export const SNARK_SCALAR_FIELD = "218882428718392752222464057452572750885483644
  */
 export const IPFS_GATEWAY_URL = "https://gateway.pinata.cloud/ipfs/";
 
-// Deployed contract addresses
-export const CONTRACTS = {
-  // Expected smart account for deterministic pattern
-  EXPECTED_SMART_ACCOUNT: "0xa3aBDC7f6334CD3EE466A115f30522377787c024",
+// ============ TYPE DEFINITIONS ============
 
+type ContractConfig = {
+  address: `0x${string}`;
+  blockNumber: number;
+  abi: readonly unknown[];
+};
+
+type NetworkInfo = {
+  chainId: number;
+  name: string;
+  rpcUrl: string;
+  explorerUrl: string;
+};
+
+type PoolChainContracts = {
+  shinobiCashEntrypoint: ContractConfig;
+  shinobiCashEthPool: ContractConfig;
+  withdrawalInputSettler: ContractConfig;
+  depositOutputSettler: ContractConfig;
+  samechainWithdrawalPaymaster: ContractConfig;
+  crosschainWithdrawalPaymaster: ContractConfig;
+  fillOracle: ContractConfig;
+  intentOracle: ContractConfig;
+};
+
+type CrossChainContracts = {
+  shinobiCashCrosschainDepositEntrypoint: ContractConfig;
+  withdrawalOutputSettler: ContractConfig;
+  depositInputSettler: ContractConfig;
+  fillOracle: ContractConfig;
+};
+
+// ============ POOL CHAIN CONFIGURATION ============
+
+/**
+ * The main pool chain where the Shinobi Cash pool is deployed
+ * This is always Arbitrum Sepolia
+ */
+export const POOL_CHAIN: NetworkInfo & { contracts: PoolChainContracts } = {
+  chainId: 421614,
+  name: "Arbitrum Sepolia",
+  rpcUrl: 'https://sepolia-rollup.arbitrum.io/rpc',
+  explorerUrl: "https://sepolia.arbiscan.io",
+  contracts: {
+    shinobiCashEntrypoint: {
+      address: '0x11C3E1332893A3E34273e6c81f245fA7fB84A52d',
+      blockNumber: 214546382,
+      abi: ShinobiCashEntrypointAbi
+    },
+    shinobiCashEthPool: {
+      address: '0x5543b250b8a44513BA91C0346BeE40890FfD7D18',
+      blockNumber: 214550187,
+      abi: ShinobiCashPoolAbi
+    },
+    withdrawalInputSettler: {
+      address: "0x31105923593a7A02F8CDE2e048E0acd178F5e4c5",
+      blockNumber: 214550522,
+      abi: []
+    },
+    depositOutputSettler: {
+      address: "0x0B44BE1cA20749aa2ac2A4f078188f0E14d9DcA2",
+      blockNumber: 214550698,
+      abi: ShinobiDepositOutputSettlerAbi
+    },
+    samechainWithdrawalPaymaster: {
+      address: '0x4d09818A2C5Dc21D3EA4Ef93D721c52696fC31F3',
+      blockNumber: 214552085,
+      abi: SimpleShinobiCashPoolPaymasterAbi
+    },
+    crosschainWithdrawalPaymaster: {
+      address: '0x41a69bd2b52c32b1ad2bd729885f5287a07287f7',
+      blockNumber: 0,
+      abi: CrosschainWithdrawalPaymasterAbi
+    },
+    fillOracle: {
+      address: '0x4cb20f4415d3666e5d92e261de98fc9b7843d036',
+      blockNumber: 0,
+      abi: []
+    },
+    intentOracle: {
+      address: '0x4cb20f4415d3666e5d92e261de98fc9b7843d036',
+      blockNumber: 0,
+      abi: []
+    },
+  }
 } as const;
 
-export const SUPPORTED_CROSSCHAINS_NETWORK = [{
+// ============ SUPPORTED CROSSCHAIN NETWORKS ============
+
+/**
+ * Supported crosschain networks that can interact with the pool
+ * Each chain has its own set of contracts for crosschain operations
+ */
+export const SUPPORTED_CROSSCHAINS: Record<number, NetworkInfo & { contracts: CrossChainContracts }> = {
+  84532: {
     chainId: 84532,
     name: "Base Sepolia",
     rpcUrl: 'https://sepolia.base.org',
     explorerUrl: "https://sepolia.basescan.org",
+    contracts: {
+      shinobiCashCrosschainDepositEntrypoint: {
+        address: '0x3f0351cdd05616B1807C177592ccB81b3220b5Ff',
+        blockNumber: 33607182,
+        abi: ShinobiCrosschainDepositEntrypointAbi
+      },
+      withdrawalOutputSettler: {
+        address: "0x621Ca010AE73309cF1FF6E75D53d26BEBCB0cfDe",
+        blockNumber: 33603332,
+        abi: ShinobiWithdrawalOutputSettlerAbi
+      },
+      depositInputSettler: {
+        address: '0x9F5f52D0E481BfDA8028F64E7BA2fA76A897237b',
+        blockNumber: 33607221,
+        abi: []
+      },
+      fillOracle: {
+        address: '0x',
+        blockNumber: 0,
+        abi: []
+      },
+    },
   }
-] as const;
-
-export const POOL_CHAIN_NETWORK = {
-  chainId: 421614,
-  name: "Arbitrum Sepolia",
-  rpcUrl: '',
-  explorerUrl: "https://sepolia.arbiscan.io",
+  // Add more crosschains here as they are supported (e.g., Optimism Sepolia, etc.)
 } as const;
 
-export const crosschainConfig = {
-  84532: {
-    shinobiCashCrosschainDepositEntrypoint:{
-      address:'0x3f0351cdd05616B1807C177592ccB81b3220b5Ff',
-      blockNumber:33607182,
-      abi:ShinobiCrosschainDepositEntrypointAbi
-    },
-    withdrawalOutputSettler:{
-      address: "0x621Ca010AE73309cF1FF6E75D53d26BEBCB0cfDe",
-      blockNumber:33603332,
-      abi:ShinobiWithdrawalOutputSettlerAbi
-    },
-    depositInputSettler:{
-      address:'0x9F5f52D0E481BfDA8028F64E7BA2fA76A897237b',
-      blockNumber:33607221,
-      abi:[]
-    },
-    fillOracle:{
-      address:'0x',
-      blockNumber:0,
-      abi:[]
-    },
-  },
+// ============ LEGACY EXPORTS (for backward compatibility) ============
 
-} as const;
-
+/**
+ * @deprecated Use POOL_CHAIN instead
+ */
 export const poolChainConfig = {
-  421614:{
-    shinobiCashEntrypoint:{
-      address:'0x11C3E1332893A3E34273e6c81f245fA7fB84A52d',
-      blockNumber:214546382,
-      abi:ShinobiCashEntrypointAbi
-    },
-    shinobiCashEthPool:{
-      address:'0x5543b250b8a44513BA91C0346BeE40890FfD7D18',
-      blockNumber:214550187,
-      abi:ShinobiCashPoolAbi
-    },
-    withdrawalInputSettler:{
-      address: "0x31105923593a7A02F8CDE2e048E0acd178F5e4c5",
-      blockNumber:214550522,
-      abi:[]
-    },
-    depositOutputSettler:{
-      address: "0x0B44BE1cA20749aa2ac2A4f078188f0E14d9DcA2",
-      blockNumber:214550698,
-      abi:ShinobiDepositOutputSettlerAbi
-    },
-    samechainWithdrawalPaymaster:{
-      address:'0x4d09818A2C5Dc21D3EA4Ef93D721c52696fC31F3',
-      blockNumber:214552085,
-      abi:SimpleShinobiCashPoolPaymasterAbi
-    },
-    crosschainWithdrawalPaymaster:{
-      address:'0x41a69bd2b52c32b1ad2bd729885f5287a07287f7',
-      blockNumber:0,
-      abi:CrosschainWithdrawalPaymasterAbi
-    },
-    fillOracle:{
-      address:'0x4cb20f4415d3666e5d92e261de98fc9b7843d036',
-      blockNumber:0,
-      abi:[]
-    },
-    intentOracle:{
-      address:'0x4cb20f4415d3666e5d92e261de98fc9b7843d036',
-      blockNumber:0,
-      abi:[]
-    },
-  }
-} as const
+  [POOL_CHAIN.chainId]: POOL_CHAIN.contracts
+} as const;
 
-  
+/**
+ * @deprecated Use SUPPORTED_CROSSCHAINS instead
+ */
+export const crosschainConfig = {
+  84532: SUPPORTED_CROSSCHAINS[84532].contracts
+};
+
+/**
+ * @deprecated Use POOL_CHAIN directly
+ */
+export const POOL_CHAIN_NETWORK = {
+  chainId: POOL_CHAIN.chainId,
+  name: POOL_CHAIN.name,
+  rpcUrl: POOL_CHAIN.rpcUrl,
+  explorerUrl: POOL_CHAIN.explorerUrl,
+} as const;
+
+/**
+ * @deprecated Use Object.values(SUPPORTED_CROSSCHAINS)
+ */
+export const SUPPORTED_CROSSCHAINS_NETWORK = [{
+  chainId: 84532,
+  name: "Base Sepolia",
+  rpcUrl: 'https://sepolia.base.org',
+  explorerUrl: "https://sepolia.basescan.org",
+}] as const;
+
+// ============ SHARED CONTRACT ADDRESSES ============
+
+/**
+ * Other shared contract addresses
+ */
+export const CONTRACTS = {
+  // Expected smart account for deterministic pattern
+  EXPECTED_SMART_ACCOUNT: "0xa3aBDC7f6334CD3EE466A115f30522377787c024" as `0x${string}`,
+
+  // ERC-4337 EntryPoint (standard across all networks)
+  ERC4337_ENTRYPOINT: "0x0000000071727De22E5E9d8BAf0edAc6f37da032" as `0x${string}`,
+} as const;
