@@ -15,3 +15,4 @@ export { ShinobiWithdrawalOutputSettlerAbi } from './abi/ShinobiWithdrawalOutput
 
 // ============ CONTRACTS ============
 export * from './contracts/constants';
+export * from './network';
